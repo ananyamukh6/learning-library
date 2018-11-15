@@ -3,50 +3,152 @@
 
 # From files to Object Storage, then to ADWC and OAC                                    
 
-When you need a visualization and want to keep up with the data source updates, Oracle provides the perfect tools, all you need to do is to link them together. This workshop walks you through all the steps to set up the pipeline. In order to get started, you will need to provision a **Virtual Machine (VM)**, **Oracle Object Storage**, **Oracle Autonomous Data Warehouse (ADW)**, **Oracle Autonomous Analytic Cloud Service (OAC)** (or using local **Oracle Data Visualization Desktop (DVD)** free with the purchase of ADW service). Information about how to provision those instances can be found inside upper level workshop folders.
+When you need a visualization and want to keep it up with the data source updates, Oracle provides the perfect tools, all you have to do is to link them together. This workshop walks you through all the steps to set up the pipeline. In order to get started, you will need to provision a **Virtual Machine (VM)**, **Oracle Object Storage**, **Oracle Autonomous Data Warehouse (ADW)**, **Oracle Autonomous Analytic Cloud Service (OAC)** (or using local **Oracle Data Visualization Desktop (DVD)** free with the purchase of ADW service). Information about how to provision those instances can be found inside upper level workshop folders.
 
 A typical workflow contains 3 steps:
 1. Obtain the data from various resources and upload it into object storage, this step can be automated through scheduling a script job in VM;  
 2. Load the data from object storage into ADWC, this step can be automated through scheduling a notebook job in ADWC; 
-3. Refresh the visualization in OAC or DVD to reflect the data updates in ADWC.  
+3. Refresh the visualization in OAC or DVD to reflect the data updates in ADWC. 
 
-## Goals for this workshop
+## Move data from various sources to ADWC
 
- - Get comfortable with Oracle's public cloud services
- - Load data into the object store
- - Load data from the object store
- - Use Oracle Machine Learning SQL notebooks
- - Schedule SQL notebook job
- - Use Oracle Analytics CLoud (OAC) with ADW
- - Use Oracle Data Visualization Desktop (DVD) with ADW
+## Loading data to ADWC from object storage
 
-# Workshop Overview
+We have already seen in ?? how to provision Autonomous Data Warehouse (ADWC). In this section we will focus on how to get data to ADWC from object storage without any human intervention.
 
-**Lab Prerequisites – Required Software**
 
-*1. Data Visualization Desktop (DVD)*
-  DVD tool comes free with the purchase of ADWC service, it is a local version of OAC with basic functions. 
-  To download and install Data Visualization Desktop please follow <a href="https://www.oracle.com/technetwork/middleware/oracle-data-visualization/downloads/oracle-data-visualization-desktop-2938957.html" target="_blank"> this link </a>, and select the operating system for your computer. This page also has instructions on how to install DVD on Windows and Mac OSX.
+We have already seen how to set up an object storage and load data into it in the previous section. Once the data files are updated in object storage we need to construct the URLs of the files and an object store auth token. Refer Steps 7-9 Under Setup the OCI Object Store (https://oracle.github.io/learning-library/workshops/journey4-adwc/?page=LabGuide3.md)
 
-  If you already have Data Visualization Desktop installed on your computer then please check the version. The minimum version that is required to connect to an Oracle Autonomous Data Warehouse is 12c 12.2.5.0.0.
 
-## Lab 1: Getting Started and Provisioning a New Autonomous Data Warehouse
-This lab walks you through the steps of logging into Oracle Cloud, accessing the Oracle Autonomous Data Warehouse console and provisioning your first Autonomous Data Warehouse. The last part of this lab will explore how to connect to your new data warehouse using Oracle SQL Developer.
+**Prerequisites – Required Software**
 
-**Key Objectives**:
 
-- Learn how to sign-in to the Oracle Public Cloud
-- Learn how to provision a new Autonomous Data Warehouse instance
-- Learn how to download the client credentials wallet file
-- Learn how to connect from Oracle SQL Developer
+![](images/objectstoragebucket.png)
 
-**[Click here to run Lab 1](LabGuide1.md)**
+![](images/Autntoken.png)
 
-<a href="https://apexapps.oracle.com/pls/apex/f?p=44785:112:0::::P112_CONTENT_ID:24294" target="_blank">**Click here to watch a video demonstration**</a> of provisioning a new autonomous data warehouse.
 
-<a href="https://apexapps.oracle.com/pls/apex/f?p=44785:112:0::::P112_CONTENT_ID:22790 " target="_blank">**Click here to watch a video demonstration**</a> of connecting to your new Autonomous Data Warehouse using SQL Developer.
+Now we go to our ADWC instance service console and go to our ML notebook. If you need help creating an Oracle ML note book please refer to (https://oracle.github.io/learning-library/workshops/journey4-adwc/?page=LabGuide8.md).
 
-## Lab 2: Working with Data Warehouse Services and the Free Sample Data Sets
+
+## Step 1: Remotely upload data into Oracle Object Storage 
+This step walks you through the details of loading data into Oracle Object Storage, and how to set up a scheduler in VM to automate this job.
+
+
+We have 2 users "ADMIN" and "OMLUSER1". We use the "OMLUSER1" for the further steps. We cannot use "ADMIN" for any of the below steps. 
+
+
+![](images/OMLusers.png)
+
+Now we run the below script in Oracle ML notebook as OMLUSER1 to load the data automatically from Object Storage to ADWC.
+
+![](images/sqlquery.png)
+
+The data is now loaded in ADWC. We will create a job in our ML notebook to automate this loading process. 
+The steps for scheduling a data load to ADWC are shown below.
+- Click on Jobs under Quick Actions
+   ![](images/mlnotebookhome.png)
+   
+   
+- The job window opens and now click on create
+   ![](images/jobshomepage.png)
+   
+- The job ctreation wizard will pop up. Here you can select the notebook which you can to schedule for an automatic run and also select the frequency of the run. For example here we want our data load job to run every 15 minutes.
+    ![](images/jobdetails.png)
+      
+ Below is our scheduled job
+   ![](images/jobdetails2.png)
+   
+ We can see that out job for automatic data load has ran successfuly every 15 minutes.
+   ![](images/jobrundetails.png)
+   
+## Using the data in Data Visualization desktop
+The data we have in ADWC can we used for drawing important business insights and in the below steps we will see how we can use Data Vizualization desktop for the name. You get a free licence for Data Visualization Desktop with Autonomous Data warehouse. 
+
+
+- Learn how to connect to the Oracle Object Storage using rclone
+- Learn how to upload data into Oracle Object Storage remotely
+
+**Guide**
+
+1. Create a bucket in Object Storage
+Instructions can be found here:   <a href="https://cloudsolutionhubs.github.io/autonomous-database/workshops/?page=LabGuide400LoadingDataToOracleAutonomousDatabase.md" target="_blank">Setup the OCI Object Store</a>
+![](images/1-1.png)
+Remember to choose "Standard" for storage tier, "Archieve" type won't work for step 2.
+
+2. Obtain "Secret Key" and "Access Key"
+
+To access the Oracle Object Storage from outside, we need to obtain Object Storage's "Secret Access Key" and "Access Key ID" first.
+Inside OCI, click through top_left MENU => Find "Identity" under Govonance and Administration => Select "Users" => Click on the user acount to open;
+![](images/1-2.png)
+
+In the new page, on the left side, select "Customer Secret Keys" under Resources => Click "Generate Secret Key" => Put in Name => Copy the generated Secret Key and write it down (IMPORTANT! This key will not show again!) => Now, in the main page "Customer Secret Keys" section, click "show" to see the Access Key value.
+![](images/1-3.png)
+
+3. Install rclone tool
+
+Rclone ("rsync for cloud storage") is a command line program to sync files and directories to and from different cloud storage providers.
+Detail instructions can be found here: <a href="https://rclone.org" target="_blank">Rclone homepage</a>
+
+Here we use a Virtual Machine on Oracle Cloud as an example to show how to use rclone to make the connection happen:
+Inside VM, open a terminal, run the following command to install rclone:
+
+```curl https://rclone.org/install.sh | sudo bash```
+
+If you encounter any installation problems, you can find help here: <a href="https://rclone.org/downloads/" target="_blank">Rclone download</a>
+
+
+4. Set up OCI Object Storage bucket as rclone remote
+Inside VM terminal, run rclone config command to set up a remote link:
+
+```rclone config```
+
+![](images/1-4.png)
+
+then enter ```n``` to select "New remote" option.
+
+Following prompt, entering/selecting the following information:
+```
+name: XXX
+
+type = s3  (Oracle Object Storage is categoried as s3 here)
+
+provider = Other (Oracle is categoried as other)
+
+env_auth = false
+
+access_key_id = enter the access key value in step 2
+
+secret_access_key = enter the secret key value in step 2
+
+region = us-ashburn-1 (select the region in which you created your service, this your_region_identifier can be found in top right region of OCI interface )
+
+endpoint = https://<your_namespace>.compat.objectstorage.<your_region_identifier>.oraclecloud.com (namespace can be found in your object storage bucket information page)
+
+acl = bucket-owner-full-control
+```
+
+5. Load data into Object Storage
+
+Once your have set up your rclone remote, you can confirm it with command:
+
+```rclone listremotes```
+
+![](images/1-5.png)
+
+In this example, rclone has a remote name 'oci' linking with our Object Storage. We can use the following command to upload local data into the "Test" bucket inside our Object Storage:
+
+```rclone --verbose --cache-workers 64 --transfers 64 --retries 32    copy   /home/ubuntu/temp_unzip/    oci:Test```
+
+After "copy", the "/home/ubuntu/temp_unzip/" is the path of the source file, "oci:Test" is the target Object Storage bucket, note that if there's no bucket name "Test" in your Object Storage, it will create one with this name to store the files.
+
+![](images/1-6.png)
+
+If files are already in Object Storage bucket, then this copy command will only transfer files that need to be updated.
+
+More instructions can be found here https://cloud.oracle.com/iaas/whitepapers/transfer-data-to-object-storage.pdf
+
+## Step 2: Automatically load data from Object Storage into ADWC
 In this lab you will explore the free sample data sets that are included witin your new autonomous data warehouse. As part of this lab you will experiment with the selecting different levels of database services that come with your Autonomous Data Warehouse.
 
 **Key Objectives**:
@@ -60,7 +162,7 @@ In this lab you will explore the free sample data sets that are included witin y
 <a href="https://apexapps.oracle.com/pls/apex/f?p=44785:112:0::::P112_CONTENT_ID:22791" target="_blank">**Click here to watch a video demonstration**</a> of running queries against the sample data sets that are part of your Autonomous Data Warehouse.
 
 
-## Lab 3: Loading Data into Your New Autonomous Data Warehouse
+## Step 3: Visualize data in ADWC using OAC or DVD
 In this lab, you will be uploading files to Oracle Object Storage, creating new sample tables, loading data into those sample tables from files on the OCI Object Storage, and troubleshooting errors relating to your data load jobs.
 
 **Key Objectives**:
@@ -75,7 +177,7 @@ In this lab, you will be uploading files to Oracle Object Storage, creating new 
 <a href="https://apexapps.oracle.com/pls/apex/f?p=44785:112:0::::P112_CONTENT_ID:22792" target="_blank">**Click here to watch a video demonstration**</a> of loading data into your Autonomous Data Warehouse
 
 
-## Lab 4: Querying External Data
+## Step 4: Test
 In this lab, you will be querying files directly on Oracle Object Storage without loading them to your autonomous data warehouse.
 
 **Key Objectives**:
@@ -88,98 +190,6 @@ In this lab, you will be querying files directly on Oracle Object Storage withou
 
 
 
-## Lab 5: Creating Rich Data Visualizations
-This lab will walk you through the process of connecting your Autonomous Data Warehouse to Data Visualization Desktop and then use DVD and build sophisticated data visualizations to help your business teams get deeper insights about their data
-
-**Key Objectives**:
-
-- Learn how to connect your free Data Visualization Desktop analytics tool to Autonomous Data Warehouse
-- Learn how to secure a desktop client connection to Autonomous Data Warehouse
-- Learn how to create a simple data visualization project with Oracle Data Visualization Desktop
-- Learn how to access and gain insights from data in the Autonomous Data Warehouse
-
-**[Click here to run Lab 5](LabGuide5.md)**
-
-<a href="https://youtu.be/n5Q_5abgXcI" target="_blank">**Click here to watch a video demonstration**</a> that walks you through the process of connecting Data Visualization Desktop to your new Autonomous Data Warehouse and building sophisticated data visualizations.
-
-
-
-# Bonus Labs - Slightly More Advanced Features for Data Warehouse Developers, Cloud DBAs and Data Scientists
-
-The following labs will let you explore some of the more advanced features of your Autonomous Data Warehouse. They cover the following topics that will help you expand your knowledge by introducing some more advanced topics for Autonomous Data Warehouse"
-
-1) Managing and monitoring Autonomous Data Warehouse using the Cloud Console
-2) Using Oracle Machine Learning SQL Notebooks
-3) Introduction to machine learning with DBMS_PREDICTIVE_ANALYTICS
-4) Using data integration tools with Autonomous Data Warehouse
-
-
-
-## Bonus Lab - Lab 6:  Managing and Monitoring Autonomous Data Warehouse using the Cloud Service Console
-For this lab you will watch a couple of demos to show the capabilities available via the Cloud Console and Autonomous Data Warehouse Service Console.
-
-**Key Objectives**:
-
-- Learn how to start/stop your ADW instance
-- Learn how to recover your data warehouse - if needed
-- Learn how to use the service console to monitor the performance of your Autonomous Data Warehouse
-
-**[Click here to run Bonus Lab 6](LabGuide6.md)**
-
-<a href="https://apexapps.oracle.com/pls/apex/f?p=44785:112:0::::P112_CONTENT_ID:24194" target="_blank">**Click here to watch a video demonstration**</a> that shows you how to monitor performance of your Autonomous Data Warehouse and perform basic administrative tasks.
-
-
-
-## Bonus Lab - Lab 7: Scaling and Performance in Autonomous Data Warehouse
-In this lab you will scale up your Oracle Autonomous Data Warehouse instance by adding more CPUs with on interruption to your service. You will watch a recorded demo that shows the performance and concurrency impacts of scaling your service online.
-
-**Key Objectives**:
-
-- Learn how to scale up and down the CPUs and storage used by your Autonomous Data Warehouse
-- See how scaling affects your concurrency and performance
-
-**[Click here to run Bonus Lab 7](LabGuide7.md)**
-
-
-
-## Bonus Lab - Lab 8:  Using Oracle Machine Learning SQL Notebooks
-During this lab you will be using the new Oracle Machine Learning SQL notebook application that is part of your Autonomous Data Warehouse. This browser-based application provides a web interface to run SQL queries and scripts, which can be grouped together within a notebook. Notebooks can be used to build single reports, collections of reports, and dashboards. Oracle Machine Learning provides a simple way to share workbooks with other OML users.
-
-**Key Objectives**:
-
-- Learn how to create new users for Oracle Machine Learning
-- Learn how to run a SQL Statement
-- Learn how to share notebooks
-- Learn how to create and run SQL scripts
-
-**[Click here to run Bonus Lab 8](LabGuide8.md)**
-
-
-
-## Bonus Lab - Lab 9: Simple Introduction to Machine Learning Algorithms
-During this lab you will be using the Oracle Machine Learning SQL notebook application to explore how you can use the in-database DBMS_PREDICTIVE_ANALYTICS functionality. DBMS_PREDICTIVE_ANALYTICS provides a set of easy-to-use procedures that simplify the machine learning process.
-
-**Key Objectives**:
-
-- Learn how to use DBMS_PREDICTIVE_ANALYTICS routines
-- Learn how to use Oracle ML Gallery
-- Learn how to import notebooks into Oracle ML
-
-**[Click here to run Bonus Lab 9](LabGuide9.md)**
-
-
-
-## Bonus Lab - Lab 10: Using Data Integration Tools with Autonomous Data Warehouse
-In this lab, you will configure and use Oracle Data Integration Platform Cloud (DIPC) with Autonomous Data Warehouse. This lab follow a typical enterprise data warehouse reference implementation with ETL/ELT batch processing, real time data replication, and data quality review. You will load data from a flat file and a database table using Oracle Data Integrator (ODI) to your Autonomous Data Warehouse. You will replicate data from a database table to Autonomous Data Warehouse using Oracle Golden Gate (OGG). You will review data quality in your Autonomous Data Warehouse using Oracle Enterprise Data Quality (EDQ).
-
-**Key Objectives**:
-
-- Learn how extract, load and transform data into your Autonomous Data Warehouse using Oracle Data Integration Platform
-- Learn how to replicate data into your Autonomous Data Warehouse with Oracle GoldenGate (OGG)
-- Learn how to review data quality your Autonomous Data Warehouse with Oracle Enterprise Data Quality (EDQ)
-
-**[Click here to run Bonus Lab 10](LabGuide10.md)**
-
 
 
 ## Learn More About Autonomous Data Warehouse...
@@ -190,3 +200,4 @@ Use these links to get more information about Oracle Autonomous Data Warehouse
  - <a href="http://www.oracle.com/us/products/database/autonomous-dw-cloud-ipaper-3938921.pdf" target="_blank">Oracle Autonomous Data Warehouse ipaper</a>
  - <a href="https://docs.oracle.com/en/cloud/paas/autonomous-data-warehouse-cloud/index.html" target="_blank">Oracle Autonomous Data Warehouse Documentation</a>
  - <a href="https://docs.oracle.com/en/cloud/paas/autonomous-data-warehouse-cloud/tutorials.html" target="_blank">Additional Autonomous Data Warehouse Tutorials</a>
+
